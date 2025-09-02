@@ -18,6 +18,10 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("BlenderMCPServer")
 
+# Default configuration
+DEFAULT_HOST = "localhost"
+DEFAULT_PORT = 9876
+
 @dataclass
 class BlenderConnection:
     host: str
@@ -193,7 +197,6 @@ async def server_lifespan(server: FastMCP) -> AsyncIterator[Dict[str, Any]]:
 # Create the MCP server with lifespan support
 mcp = FastMCP(
     "BlenderMCP",
-    description="Blender integration through the Model Context Protocol",
     lifespan=server_lifespan
 )
 
@@ -226,7 +229,9 @@ def get_blender_connection():
     
     # Create a new connection if needed
     if _blender_connection is None:
-        _blender_connection = BlenderConnection(host="localhost", port=9876)
+        host = os.getenv("BLENDER_HOST", DEFAULT_HOST)
+        port = int(os.getenv("BLENDER_PORT", DEFAULT_PORT))
+        _blender_connection = BlenderConnection(host=host, port=port)
         if not _blender_connection.connect():
             logger.error("Failed to connect to Blender")
             _blender_connection = None
